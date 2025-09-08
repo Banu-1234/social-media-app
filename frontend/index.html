@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Social Media</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #0077ff;
+      color: white;
+      padding: 15px 20px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 20px;
+      gap: 20px;
+    }
+    section {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      flex: 1 1 45%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      background: #0077ff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background: #005fcc;
+    }
+    .card {
+      background: #fafafa;
+      border: 1px solid #eee;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+    .username {
+      font-weight: bold;
+      color: #0077ff;
+    }
+    .content {
+      margin: 8px 0;
+      font-size: 15px;
+      color: #444;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .like-btn, .comment-btn {
+      background: #eee;
+      color: #333;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      border: none;
+    }
+    .like-btn:hover {
+      background: #d1e8ff;
+    }
+    .comment {
+      font-size: 13px;
+      margin-left: 15px;
+      padding: 5px;
+      border-left: 2px solid #0077ff;
+      margin-top: 5px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <header>🌐 Mini Social Media</header>
+  <main>
+    <section>
+      <h2>Create User</h2>
+      <input id="username" placeholder="Enter username">
+      <input id="bio" placeholder="Enter bio">
+      <button onclick="createUser()">Create</button>
+      <h3>All Users</h3>
+      <div id="users"></div>
+    </section>
+
+    <section>
+      <h2>Create Post</h2>
+      <input id="userId" placeholder="Enter User ID">
+      <textarea id="content" placeholder="What's on your mind?"></textarea>
+      <button onclick="createPost()">Post</button>
+      <h3>Posts</h3>
+      <div id="posts"></div>
+    </section>
+  </main>
+
+  <script>
+    const API = "http://localhost:5000"
+
+    async function createUser() {
+      const username = document.getElementById("username")
+      const bio = document.getElementById("bio")
+      if (!username.value.trim()) return alert("Username required")
+      await fetch(`${API}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.value, bio: bio.value })
+      })
+      username.value = ""
+      bio.value = ""
+      loadUsers()
+    }
+
+    async function loadUsers() {
+      const res = await fetch(`${API}/users`)
+      const data = await res.json()
+      document.getElementById("users").innerHTML = data.map(u =>
+        `<div class='card'><span class="username">${u.username}</span><br><small>${u._id}</small><br>${u.bio}</div>`
+      ).join("")
+    }
+
+    async function createPost() {
+      const userId = document.getElementById("userId")
+      const content = document.getElementById("content")
+      if (!userId.value.trim() || !content.value.trim()) return alert("User ID and content required")
+      await fetch(`${API}/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: userId.value, content: content.value })
+      })
+      userId.value = ""
+      content.value = ""
+      loadPosts()
+    }
+
+    async function loadPosts() {
+      const res = await fetch(`${API}/posts`)
+      const data = await res.json()
+      document.getElementById("posts").innerHTML = data.map(p => `
+        <div      document.getElementById("posts").innerHTML = data.map(p => `
+        <div class='card'>
+          <div class="username">${p.user.username}</div>
+          <div class="content">${p.content}</div>
+          <div class="actions">
+            <button class="like-btn" onclick="likePost('${p._id}', '${p.user._id}')">❤️ Like (${p.likes.length})</button>
+            <button class="comment-btn" onclick="addComment('${p._id}')">💬 Comment</button>
+          </div>
+          <div>
+            ${p.comments.map(c => `<div class="comment">${c.text}</div>`).join("")}
+          </div>
+        </div>`
+      ).join("")
+    }
+
+    async function likePost(postId, userId) {
+      await fetch(`${API}/like/${postId}/${userId}`, { method: "POST" })
+      loadPosts()
+    }
+
+    async function addComment(postId) {
+      const text = prompt("Enter your comment:")
+      if (text && text.trim()) {
+        await fetch(`${API}/comment/${postId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        })
+        loadPosts()
+      }
+    }
+
+    // Initial load
+    loadUsers()
+    loadPosts()
+  </script>
+</body>
+</html>
