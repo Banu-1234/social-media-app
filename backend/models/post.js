@@ -4,7 +4,10 @@ const postSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   content: { type: String, required: true },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  comments: [{ text: String }]
-})
+  comments: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Tracks comment author
+    text: String
+  }]
+}, { timestamps: true }) // Adds createdAt and updatedAt timestamps
 
 module.exports = mongoose.model("Post", postSchema)
