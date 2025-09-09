@@ -162,7 +162,6 @@
       const res = await fetch(`${API}/posts`)
       const data = await res.json()
       document.getElementById("posts").innerHTML = data.map(p => `
-        <div      document.getElementById("posts").innerHTML = data.map(p => `
         <div class='card'>
           <div class="username">${p.user.username}</div>
           <div class="content">${p.content}</div>
@@ -200,3 +199,4 @@
   </script>
 </body>
 </html>
+
