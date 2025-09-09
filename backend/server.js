@@ -53,10 +53,13 @@ app.get("/posts", async (req, res) => {
   res.json(posts)
 })
 
-// Like Post
+// Like Post (fixed error handling)
 app.post("/like/:postId/:userId", async (req, res) => {
   const { postId, userId } = req.params
   const post = await Post.findById(postId)
+  if (!post) return res.status(404).json({ error: "Post not found" })
+  const userExists = await User.findById(userId)
+  if (!userExists) return res.status(404).json({ error: "User not found" })
   if (!post.likes.includes(userId)) {
     post.likes.push(userId)
     await post.save()
@@ -64,11 +67,13 @@ app.post("/like/:postId/:userId", async (req, res) => {
   res.json({ success: true })
 })
 
-// Add Comment
+// Add Comment (fixed error handling)
 app.post("/comment/:postId", async (req, res) => {
   const { postId } = req.params
   const { text } = req.body
+  if (!text || !text.trim()) return res.status(400).json({ error: "Comment text required" })
   const post = await Post.findById(postId)
+  if (!post) return res.status(404).json({ error: "Post not found" })
   post.comments.push({ text })
   await post.save()
   res.json({ success: true })
